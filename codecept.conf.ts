@@ -1,4 +1,9 @@
-import { setHeadlessWhen, setCommonPlugins } from '@codeceptjs/configure';
+import { setHeadlessWhen, setCommonPlugins } from "@codeceptjs/configure";
+import dotenv from "dotenv";
+
+// Load environment variables from .env file
+dotenv.config();
+
 // turn on headless mode when running with HEADLESS=true environment variable
 // export HEADLESS=true && npx codeceptjs run
 setHeadlessWhen(process.env.HEADLESS);
@@ -7,25 +12,28 @@ setHeadlessWhen(process.env.HEADLESS);
 setCommonPlugins();
 
 export const config: CodeceptJS.MainConfig = {
-  tests: './tests/*_test.ts',
-  output: './output',
+  tests: "./tests/*_test.js",
+  output: "./output",
   helpers: {
     Playwright: {
-      browser: 'chromium',
-      url: 'https://testomat.io',
+      browser: "chromium",
+      url: process.env.BASE_URL || "https://testomat.io",
       show: true,
-      trace: true,
-      waitForNavigation: 'domcontentloaded',
+      trace: false,
+      waitForNavigation: "domcontentloaded",
       waitForAction: 500,
-    }
+    },
+    REST: {
+      endpoint: process.env.API_BASE_URL,
+    },
   },
   include: {
-    I: './steps_file'
+    I: "./steps_file",
   },
   plugins: {
     htmlReporter: {
-      enabled: true
-    }
+      enabled: true,
+    },
   },
-  name: 'aqa-task-for-testomatio'
-}
+  name: "aqa-task-for-testomatio",
+};
