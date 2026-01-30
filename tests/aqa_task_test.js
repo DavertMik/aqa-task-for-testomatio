@@ -1,4 +1,3 @@
-import { timeouts } from "./../src/data/timeouts.js";
 import { TestomatApi } from "../src/helpers/testomat.api.js";
 import {
   MainPage,
