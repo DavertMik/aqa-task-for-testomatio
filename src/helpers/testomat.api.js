@@ -1,11 +1,13 @@
 export class TestomatApi {
-  constructor(I) {
+  constructor(I, token, projectId) {
     this.I = I;
+    this.projectId = projectId;
+    this.token = token;
   }
-
-  async login(api_token, expectedStatus) {
+  
+  async login(generalApiToken, expectedStatus) {
     const response = await this.I.sendPostRequest("/login", {
-      api_token: api_token,
+      api_token: generalApiToken,
     });
 
     if (response.status !== expectedStatus) {
@@ -15,12 +17,12 @@ export class TestomatApi {
     return response;
   }
 
-  async createSuite(token, projectId, suiteName, expectedStatus) {
+  async createSuite(suiteName, expectedStatus) {
     await this.I.haveRequestHeaders({
-      Authorization: token,
+      Authorization: this.token,
     });
 
-    const response = await this.I.sendPostRequest(`/${projectId}/suites`, {
+    const response = await this.I.sendPostRequest(`/${this.projectId}/suites`, {
       data: {
         type: "suites",
         attributes: {
@@ -39,12 +41,12 @@ export class TestomatApi {
     return response;
   }
 
-  async createTestCase(token, projectId, suiteId, testName, expectedStatus) {
+  async createTestCase(suiteId, testName, expectedStatus) {
     await this.I.haveRequestHeaders({
-      Authorization: token,
+      Authorization: this.token,
     });
 
-    const res = await this.I.sendPostRequest(`/${projectId}/tests`, {
+    const res = await this.I.sendPostRequest(`/${this.projectId}/tests`, {
       data: {
         type: "tests",
         attributes: {
@@ -74,8 +76,6 @@ export class TestomatApi {
   }
 
   async createSettedCountOfTests(
-    token,
-    projectId,
     suiteId,
     countOfTestsToCreate,
     expectedStatus,
@@ -86,8 +86,6 @@ export class TestomatApi {
       const testName = `Test_case_${i + 1}`;
 
       const test = await this.createTestCase(
-        token,
-        projectId,
         suiteId,
         testName,
         expectedStatus,
@@ -99,13 +97,13 @@ export class TestomatApi {
     return createdTests;
   }
 
-  async deleteSuiteById(token, projectId, suiteId, expectedStatus) {
+  async deleteSuiteById(suiteId, expectedStatus) {
     await this.I.haveRequestHeaders({
-      Authorization: token,
+      Authorization: this.token,
     });
 
     const response = await this.I.sendDeleteRequest(
-      `/${projectId}/suites/${suiteId}`,
+      `/${this.projectId}/suites/${suiteId}`,
     );
 
     if (response.status !== expectedStatus) {
@@ -117,13 +115,13 @@ export class TestomatApi {
     return response;
   }
 
-  async deleteRunById(token, projectId, runId, expectedStatus) {
+  async deleteRunById(runId, expectedStatus) {
     await this.I.haveRequestHeaders({
-      Authorization: token,
+      Authorization: this.token,
     });
 
     const response = await this.I.sendDeleteRequest(
-      `/${projectId}/runs/${runId}`,
+      `/${this.projectId}/runs/${runId}`,
     );
 
     if (response.status !== expectedStatus) {

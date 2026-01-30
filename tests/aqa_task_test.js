@@ -16,25 +16,18 @@ let createdTestCasesNames = [];
 let testomatApi;
 
 Before(async ({ I }) => {
-  testomatApi = new TestomatApi(I);
+  testomatApi = new TestomatApi(I, token, process.env.TESTOMAT_PROJECT_ID);
 
   const login = await testomatApi.login(
     process.env.TESTOMAT_GENERAL_API_TOKEN,
     expectedStatus,
   );
-  token = `Bearer ${login.data.jwt}`;
+  testomatApi.token = `Bearer ${login.data.jwt}`;
 
-  const createSuite = await testomatApi.createSuite(
-    token,
-    projectId,
-    suiteName,
-    expectedStatus,
-  );
+  const createSuite = await testomatApi.createSuite(suiteName, expectedStatus);
   suiteId = createSuite.data.data.id;
 
   createdTestCasesNames = await testomatApi.createSettedCountOfTests(
-    token,
-    projectId,
     suiteId,
     countOfTestsToCreate,
     expectedStatus,
@@ -43,12 +36,12 @@ Before(async ({ I }) => {
 
 Scenario("Test task scenario", async ({ I }) => {
   I.amOnPage("/");
-  I.waitForElement({ css: ".side-menu .login-item" }, 7);
 
+  I.waitForElement({ css: ".side-menu .login-item" }, 7);
   I.seeElement({ css: ".side-menu .login-item" });
   I.click({ css: ".side-menu .login-item" });
-  I.waitForElement({ css: "#user_email" }, 7);
 
+  I.waitForElement({ css: "#user_email" }, 7);
   I.seeElement({ css: "#user_email" });
   I.click({ css: "#user_email" });
   I.type(process.env.USER_EMAIL);
@@ -107,7 +100,7 @@ Scenario("Test task scenario", async ({ I }) => {
 
   I.fillField('[placeholder="Result message"]', statusMessage);
   I.pressKey("Tab");
-  I.seeElement(
+  I.waitForElement(
     locate("li")
       .withText(`failed`)
       .withText(`by`)
@@ -126,12 +119,12 @@ Scenario("Test task scenario", async ({ I }) => {
   I.seeElement(locate(".apexcharts-pie"));
 });
 
-After(async ({ I }) => {
+After(async () => {
   if (!suiteId) return;
 
-  await testomatApi.deleteSuiteById(token, projectId, suiteId, expectedStatus);
+  await testomatApi.deleteSuiteById(suiteId, expectedStatus);
 
   if (runId) {
-    await testomatApi.deleteRunById(token, projectId, runId, expectedStatus);
+    await testomatApi.deleteRunById(runId, expectedStatus);
   }
 });

@@ -20,7 +20,7 @@ export const config: CodeceptJS.MainConfig = {
       url: process.env.BASE_URL || "https://testomat.io",
       show: true,
       trace: false,
-      waitForNavigation: "domcontentloaded",
+      waitForNavigation: "load",
       waitForAction: 500,
     },
     REST: {
