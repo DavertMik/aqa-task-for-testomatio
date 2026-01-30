@@ -1,4 +1,4 @@
-const assert = require("assert");
+import { TestomatApi } from "../src/helpers/testomat.api.js";
 
 Feature("AQA test task");
 
@@ -10,67 +10,35 @@ let projectId = "codeceptjs-demo-project-f46c5";
 let suiteName = `Test_suite_${Date.now()}`;
 let countOfTestsToCreate = 2;
 let statusMessage = "Test Message";
-const createdTestCasesNames = [];
+let expectedStatus = 200;
+let createdTestCasesNames = [];
+
+let testomatApi;
 
 Before(async ({ I }) => {
-  const login = await I.sendPostRequest("/login", {
-    api_token: process.env.TESTOMAT_GENERAL_API_TOKEN,
-  });
+  testomatApi = new TestomatApi(I);
 
-  assert.equal(login.status, 200);
+  const login = await testomatApi.login(
+    process.env.TESTOMAT_GENERAL_API_TOKEN,
+    expectedStatus,
+  );
   token = `Bearer ${login.data.jwt}`;
 
-  I.haveRequestHeaders({
-    Authorization: token,
-    "Content-Type": "application/json",
-    Accept: "application/json",
-  });
-
-  const createSuite = await I.sendPostRequest(`/${projectId}/suites`, {
-    data: {
-      type: "suites",
-      attributes: {
-        title: suiteName,
-        "file-type": "file",
-      },
-    },
-  });
-
-  assert.equal(createSuite.status, 200);
-  assert.equal(createSuite.data.data.attributes.title, suiteName);
-
+  const createSuite = await testomatApi.createSuite(
+    token,
+    projectId,
+    suiteName,
+    expectedStatus,
+  );
   suiteId = createSuite.data.data.id;
 
-  I.haveRequestHeaders({
-    Authorization: token,
-    "Content-Type": "application/json",
-    Accept: "application/json",
-  });
-
-  for (let i = 0; i < countOfTestsToCreate; i++) {
-    const testName = `Test_case_${i + 1}`;
-    createdTestCasesNames.push(testName);
-
-    const createTests = await I.sendPostRequest(`/${projectId}/tests`, {
-      data: {
-        attributes: {
-          title: testName,
-          sync: true,
-        },
-        relationships: {
-          suite: {
-            data: {
-              type: "suites",
-              id: suiteId,
-            },
-          },
-        },
-        type: "tests",
-      },
-    });
-
-    assert.equal(createTests.status, 200);
-  }
+  createdTestCasesNames = await testomatApi.createSettedCountOfTests(
+    token,
+    projectId,
+    suiteId,
+    countOfTestsToCreate,
+    expectedStatus,
+  );
 });
 
 Scenario("Test task scenario", async ({ I }) => {
@@ -159,23 +127,17 @@ Scenario("Test task scenario", async ({ I }) => {
 });
 
 After(async ({ I }) => {
-  I.haveRequestHeaders({
-    Authorization: token,
-  });
-
-  const deleteSeiteResponse = await I.sendDeleteRequest(
-    `/${projectId}/suites/${suiteId}`,
-  );
-  // TODO: BUG - on delete must be 204 instead of 200
-  assert.equal(deleteSeiteResponse.status, 200);
-
-  I.haveRequestHeaders({
-    Authorization: token,
-  });
-
-  const deleteTestRunResponse = await I.sendDeleteRequest(
-    `/${projectId}/runs/${runId}`,
+  await testomatApi.deleteSuiteById(
+    token,
+    projectId,
+    suiteId,
+    expectedStatus,
   );
 
-  assert.equal(deleteTestRunResponse.status, 200);
+  await testomatApi.deleteRunById(
+    token,
+    projectId,
+    runId,
+    expectedStatus,
+  );
 });
