@@ -127,17 +127,11 @@ Scenario("Test task scenario", async ({ I }) => {
 });
 
 After(async ({ I }) => {
-  await testomatApi.deleteSuiteById(
-    token,
-    projectId,
-    suiteId,
-    expectedStatus,
-  );
+  if (!suiteId) return;
 
-  await testomatApi.deleteRunById(
-    token,
-    projectId,
-    runId,
-    expectedStatus,
-  );
+  await testomatApi.deleteSuiteById(token, projectId, suiteId, expectedStatus);
+
+  if (runId) {
+    await testomatApi.deleteRunById(token, projectId, runId, expectedStatus);
+  }
 });
