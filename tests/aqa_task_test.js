@@ -1,9 +1,25 @@
 import { timeouts } from "./../src/data/timeouts.js";
 import { TestomatApi } from "../src/helpers/testomat.api.js";
+import {
+  MainPage,
+  LoginPage,
+  ProjectsPage,
+  ProjectPage,
+  SuitePage,
+  ManualRunPage,
+  ManualRunResultsPage,
+} from "../src/pages/index.js";
 
 Feature("AQA test task");
 
 let testomatApi;
+let mainPage;
+let loginPage;
+let projectsPage;
+let projectPage;
+let suitePage;
+let manualRunPage;
+let manualRunResultsPage;
 
 let suiteId;
 let token;
@@ -24,6 +40,13 @@ let createdTestCasesNames = [];
 
 Before(async ({ I }) => {
   testomatApi = new TestomatApi(I, token, projectId);
+  mainPage = new MainPage(I);
+  loginPage = new LoginPage(I);
+  projectsPage = new ProjectsPage(I);
+  projectPage = new ProjectPage(I);
+  suitePage = new SuitePage(I, projectId);
+  manualRunPage = new ManualRunPage(I);
+  manualRunResultsPage = new ManualRunResultsPage(I);
 
   const login = await testomatApi.login(generalApiToken, expectedStatus);
   testomatApi.token = `Bearer ${login.data.jwt}`;
@@ -40,138 +63,37 @@ Before(async ({ I }) => {
 
 Scenario("Test task scenario", async ({ I }) => {
   I.amOnPage("/");
+  await mainPage.goToLoginPage();
 
-  I.waitForElement(locate(".side-menu .login-item"), timeouts.SHORT);
-  I.seeElement(locate(".side-menu .login-item"));
-  I.click(locate(".side-menu .login-item"));
-
-  I.waitForElement(locate("#user_email"), timeouts.SHORT);
-  I.seeElement(locate("#user_email"));
-  I.click(locate("#user_email"));
-  I.type(userEmail);
   // TODO: Need to ask: How to verify that input contains expected value?
+  // TODO: Why loginButton marked as input in DOM?
+  await loginPage.login(userEmail, userPassword);
 
-  I.waitForElement(locate("#user_password"), timeouts.SHORT);
-  I.seeElement(locate("#user_password"));
-  I.click(locate("#user_password"));
-  I.type(userPassword);
+  // TODO: Rename ProjectsPage to DashboardPage
+  await projectsPage.checkThatSignedInSuccessfullyMessageIsVisible();
+  await projectsPage.openProjectByName(projectName);
+  await projectPage.openSuiteByName(suiteName);
 
-  I.waitForElement(locate("[type='submit']"), timeouts.SHORT);
-  I.seeElement(locate("[type='submit']"));
-  I.click(locate("[type='submit']"));
+  await suitePage.openMoreOptionsMenu();
+  await suitePage.clickRunTestsButton();
 
-  I.waitForElement(
-    locate(".common-flash-success").withText("Signed in successfully"),
-    timeouts.SHORT,
-  );
-  I.seeElement(
-    locate(".common-flash-success").withText("Signed in successfully"),
-  );
+  runId = await suitePage.runTestsAndGetRunId();
 
-  I.waitForElement(locate(`a[title="${projectName}"]`), timeouts.SHORT);
-  I.seeElement(locate(`a[title="${projectName}"]`));
-  I.click(locate(`a[title="${projectName}"]`));
+  await manualRunPage.selectStatus("passed");
+  await manualRunPage.verifyStatus(userName, "passed");
 
-  I.waitForElement(locate("span").withText(`${suiteName}`), timeouts.SHORT);
-  I.seeElement(locate("span").withText(`${suiteName}`));
-  I.click(locate("span").withText(`${suiteName}`));
+  await manualRunPage.openTestCase(createdTestCasesNames[1]);
+  await manualRunPage.selectStatus("failed");
+  await manualRunPage.fillStatusMessage(statusMessage);
+  await manualRunPage.verifyStatus(userName, "failed", statusMessage);
 
-  I.waitForElement(
-    locate(".ember-basic-dropdown .md-icon-dots-horizontal"),
-    timeouts.SHORT,
-  );
-  I.seeElement(locate(".ember-basic-dropdown .md-icon-dots-horizontal"));
-  I.click(locate(".ember-basic-dropdown .md-icon-dots-horizontal"));
-
-  I.waitForElement(locate("button").withText("Run Tests"), timeouts.SHORT);
-  I.seeElement(locate("button").withText("Run Tests"));
-  I.click(locate("button").withText("Run Tests"));
-
-  I.waitForElement(locate("button").withText("Launch"), timeouts.SHORT);
-  I.seeElement(locate("button").withText("Launch"), timeouts.SHORT);
-  await I.usePlaywrightTo(
-    "catch run id after Launch click",
-    async ({ page }) => {
-      const responsePromise = page.waitForResponse(
-        (res) =>
-          res.url().includes(`/${projectId}/runs`) &&
-          res.request().method() === "POST",
-      );
-
-      await page.getByRole("button", { name: "Launch" }).click();
-
-      const response = await responsePromise;
-      const body = await response.json();
-
-      runId = body.data.id;
-    },
-  );
-
-  I.waitForElement(
-    locate(".cp-Panel-toggle button").withText("Passed"),
-    timeouts.SHORT,
-  );
-  I.seeElement(locate(".cp-Panel-toggle button").withText("Passed"));
-  I.click(locate(".cp-Panel-toggle button").withText("Passed"));
-
-  I.waitForElement(
-    locate("li").withText("passed").withText("by").withText(userName),
-    timeouts.SHORT,
-  );
-  I.seeElement(
-    locate("li").withText("passed").withText("by").withText(userName),
-  );
-
-  I.waitForElement(
-    locate(".leading-tight").withText(createdTestCasesNames[1]),
-    timeouts.SHORT,
-  );
-  I.seeElement(locate(".leading-tight").withText(createdTestCasesNames[1]));
-  I.click(locate(".leading-tight").withText(createdTestCasesNames[1]));
-
-  I.waitForElement(
-    locate(".cp-Panel-toggle button").withText("Failed"),
-    timeouts.SHORT,
-  );
-  I.seeElement(locate(".cp-Panel-toggle button").withText("Failed"));
-  I.click(locate(".cp-Panel-toggle button").withText("Failed"));
-
-  I.waitForElement(
-    locate("li").withText(`failed`).withText(`by`).withText(`${userName}`),
-    timeouts.SHORT,
-  );
-  I.seeElement(
-    locate("li").withText(`failed`).withText(`by`).withText(`${userName}`),
-  );
-
-  I.waitForElement(locate('[placeholder="Result message"]'), timeouts.SHORT);
-  I.seeElement(locate('[placeholder="Result message"]'));
-  I.fillField(locate('[placeholder="Result message"]'), statusMessage);
-  I.pressKey("Tab");
-  I.waitForElement(
-    locate("li")
-      .withText(`failed`)
-      .withText(`by`)
-      .withText(`${userName}`)
-      .withText(`with`)
-      .withText(`${statusMessage}`),
-  );
-
-  I.waitForElement(locate("button").withText("Finish Run"), timeouts.SHORT);
-  I.seeElement(locate("button").withText("Finish Run"));
-  I.click(locate("button").withText("Finish Run"));
+  await manualRunPage.finishRun();
 
   //TODO: Figure out how to catch this flash popup
   // I.seeElement(locate("h2").withText("This run has finished!"));
 
-  I.waitForElement(
-    locate(".run-status.failed").withText("failed"),
-    timeouts.SHORT,
-  );
-  I.seeElement(locate(".run-status.failed").withText("failed"));
-
-  I.waitForElement(locate(".apexcharts-pie"), timeouts.SHORT);
-  I.seeElement(locate(".apexcharts-pie"));
+  await manualRunResultsPage.verifyFailedStatusIsVisible();
+  await manualRunResultsPage.verifyPieChartIsVisible();
 });
 
 After(async () => {
