@@ -4,6 +4,7 @@ Feature("AQA test task");
 
 let suiteId;
 let token;
+let runId;
 let userName = "Test Task";
 let projectId = "codeceptjs-demo-project-f46c5";
 let suiteName = `Test_suite_${Date.now()}`;
@@ -12,15 +13,12 @@ let statusMessage = "Test Message";
 const createdTestCasesNames = [];
 
 Before(async ({ I }) => {
-  console.log("Suite name:", suiteName);
-
   const login = await I.sendPostRequest("/login", {
     api_token: process.env.TESTOMAT_GENERAL_API_TOKEN,
   });
 
   assert.equal(login.status, 200);
   token = `Bearer ${login.data.jwt}`;
-  console.log(token);
 
   I.haveRequestHeaders({
     Authorization: token,
@@ -42,7 +40,6 @@ Before(async ({ I }) => {
   assert.equal(createSuite.data.data.attributes.title, suiteName);
 
   suiteId = createSuite.data.data.id;
-  console.log("Created suite ID:", suiteId);
 
   I.haveRequestHeaders({
     Authorization: token,
@@ -108,7 +105,24 @@ Scenario("Test task scenario", async ({ I }) => {
   I.click(locate("button").withText("Run Tests"));
 
   I.waitForElement(locate("button").withText("Launch"), 7);
-  I.click(locate("button").withText("Launch"));
+
+  await I.usePlaywrightTo(
+    "catch run id after Launch click",
+    async ({ page }) => {
+      const responsePromise = page.waitForResponse(
+        (res) =>
+          res.url().includes(`/${projectId}/runs`) &&
+          res.request().method() === "POST",
+      );
+
+      await page.click('button:has-text("Launch")');
+
+      const response = await responsePromise;
+      const body = await response.json();
+
+      runId = body.data.id;
+    },
+  );
 
   I.waitForElement(locate(".cp-Panel-toggle button").withText("Passed"), 5);
   I.click(locate(".cp-Panel-toggle button").withText("Passed"));
@@ -149,9 +163,19 @@ After(async ({ I }) => {
     Authorization: token,
   });
 
-  const deleteResponse = await I.sendDeleteRequest(
+  const deleteSeiteResponse = await I.sendDeleteRequest(
     `/${projectId}/suites/${suiteId}`,
   );
   // TODO: BUG - on delete must be 204 instead of 200
-  assert.equal(deleteResponse.status, 200);
+  assert.equal(deleteSeiteResponse.status, 200);
+
+  I.haveRequestHeaders({
+    Authorization: token,
+  });
+
+  const deleteTestRunResponse = await I.sendDeleteRequest(
+    `/${projectId}/runs/${runId}`,
+  );
+
+  assert.equal(deleteTestRunResponse.status, 200);
 });
