@@ -41,24 +41,24 @@ Before(async ({ I }) => {
 Scenario("Test task scenario", async ({ I }) => {
   I.amOnPage("/");
 
-  I.waitForElement({ css: ".side-menu .login-item" }, timeouts.SHORT);
-  I.seeElement({ css: ".side-menu .login-item" });
-  I.click({ css: ".side-menu .login-item" });
+  I.waitForElement(locate(".side-menu .login-item"), timeouts.SHORT);
+  I.seeElement(locate(".side-menu .login-item"));
+  I.click(locate(".side-menu .login-item"));
 
-  I.waitForElement({ css: "#user_email" }, timeouts.SHORT);
-  I.seeElement({ css: "#user_email" });
-  I.click({ css: "#user_email" });
+  I.waitForElement(locate("#user_email"), timeouts.SHORT);
+  I.seeElement(locate("#user_email"));
+  I.click(locate("#user_email"));
   I.type(userEmail);
   // TODO: Need to ask: How to verify that input contains expected value?
 
-  I.waitForElement({ css: "#user_password" }, timeouts.SHORT);
-  I.seeElement({ css: "#user_password" });
-  I.click({ css: "#user_password" });
+  I.waitForElement(locate("#user_password"), timeouts.SHORT);
+  I.seeElement(locate("#user_password"));
+  I.click(locate("#user_password"));
   I.type(userPassword);
 
-  I.waitForElement({ css: "[type='submit']" }, timeouts.SHORT);
-  I.seeElement({ css: "[type='submit']" });
-  I.click({ css: "[type='submit']" });
+  I.waitForElement(locate("[type='submit']"), timeouts.SHORT);
+  I.seeElement(locate("[type='submit']"));
+  I.click(locate("[type='submit']"));
 
   I.waitForElement(
     locate(".common-flash-success").withText("Signed in successfully"),
