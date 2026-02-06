@@ -1,11 +1,12 @@
-export class TestomatApi {
-  constructor(I, token, projectId) {
-    this.I = I;
+export class TestomatApi extends Helper {
+
+  constructor(token, projectId) {    
+    this.I = this.helpers.REST;
     this.projectId = projectId;
     this.token = token;
   }
   
-  async login(generalApiToken, expectedStatus) {
+  async loginViaAPI(generalApiToken, expectedStatus) {
     const response = await this.I.sendPostRequest("/login", {
       api_token: generalApiToken,
     });

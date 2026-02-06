@@ -26,9 +26,22 @@ export const config: CodeceptJS.MainConfig = {
     REST: {
       endpoint: process.env.API_BASE_URL,
     },
+    TestomatHelper: {
+      ...
+    },
   },
   include: {
     I: "./steps_file",
+    DataObject: "./data.js",
+    MainPage: "..."
+      LoginPage,
+      ProjectsPage,
+      ProjectPage,
+      SuitePage,
+      ManualRunPage,
+      ManualRunResultsPage,
+    } from "../src/pages/index.js";
+    
   },
   plugins: {
     htmlReporter: {
